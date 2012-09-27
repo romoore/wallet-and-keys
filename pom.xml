@@ -57,6 +57,13 @@
       <version>1.0.2</version>
       <type>jar</type>
     </dependency>
+    <!-- For configuration file -->
+    <dependency>
+      <groupId>com.thoughtworks.xstream</groupId>
+      <artifactId>xstream</artifactId>
+      <version>1.4.2</version>
+      <type>jar</type>
+    </dependency>
 	</dependencies>
 
 	<build>
@@ -98,6 +105,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
+              <mainClass>com.owlplatform.solver.WalletAndKeys</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
