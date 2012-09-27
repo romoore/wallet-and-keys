@@ -1,0 +1,12 @@
+<com.owlplatform.solver.WAKConfig>
+  <worldModelHost>localhost</worldModelHost>
+  <worldModelSolverPort>7009</worldModelSolverPort>
+  <worldModelClientPort>7010</worldModelClientPort>
+  <requiredItems>
+    <string>my.wallet</string>
+    <string>my.keys</string>
+  </requiredItems>
+  <doors>
+    <string>my.door</string>
+  </doors>
+</com.owlplatform.solver.WAKConfig>

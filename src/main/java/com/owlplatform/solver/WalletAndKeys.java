@@ -18,6 +18,12 @@
  */
 package com.owlplatform.solver;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
+import com.thoughtworks.xstream.XStream;
+
 /**
  * A simple solver that tries to detect whether you've forgotten something on
  * your way out based on the mobility of your things and a door switch. If any
@@ -27,18 +33,32 @@ package com.owlplatform.solver;
  * @author Robert Moore
  * 
  */
-public class WalletAndKeys {
+public class WalletAndKeys extends Thread{
 
   /**
    * Parses the arguments and gets things started.
    * @param args <Config File>
+   * @throws Throwable 
    */
-  public static void main(String[]args){
+  public static void main(String[]args) throws Throwable{
     if(args.length < 1){
       System.err.println("Missing one or more arguments:\n\t<Config File>");
       return;
     }
     
+    XStream configReader = new XStream();
+    WAKConfig conf = (WAKConfig)configReader.fromXML(new File(args[0]));
+    System.out.println(configReader.toXML(conf));
+   
+    new WalletAndKeys(conf);
+    
+  }
+  
+  private final WAKConfig config;
+  
+  public WalletAndKeys(final WAKConfig config){
+    super("Main Thread");
+    this.config = config;
   }
   
 }
