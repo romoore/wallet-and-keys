@@ -48,7 +48,8 @@ import com.thoughtworks.xstream.XStream;
  */
 public class WalletAndKeys extends Thread {
 
-  Logger log = LoggerFactory.getLogger(WalletAndKeys.class);
+  private static final Logger log = LoggerFactory
+      .getLogger(WalletAndKeys.class);
 
   /**
    * Parses the arguments and gets things started.
@@ -62,19 +63,21 @@ public class WalletAndKeys extends Thread {
       System.err.println("Missing one or more arguments:\n\t<Config File>");
       return;
     }
-
+    log.debug("Loading configuration file {}.", args[0]);
     XStream configReader = new XStream();
     WAKConfig conf = (WAKConfig) configReader.fromXML(new File(args[0]));
-    System.out.println(configReader.toXML(conf));
-
+    log.debug("Configuration:\n{}", configReader.toXML(conf));
     final WalletAndKeys app = new WalletAndKeys(conf);
-
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
+        log.info("Caught user shutdown request.");
         app.shutdown();
+        log.debug("Shutdown invoked on solver.");
       }
     });
-
+    log.debug("Created shutdown hook.");
+    app.start();
+    log.debug("Main thread exiting.");
   }
 
   private final WAKConfig config;
@@ -92,9 +95,11 @@ public class WalletAndKeys extends Thread {
 
     this.asSolver.setHost(this.config.getWorldModelHost());
     this.asSolver.setPort(this.config.getWorldModelSolverPort());
+    this.asSolver.setOriginString(this.config.getOriginName());
   }
 
   public void run() {
+    log.info("Starting wallet-and-keys solver.");
     String itemIds = buildEitherOrRegex(this.config.getRequiredItems());
     String doorIds = buildEitherOrRegex(this.config.getDoors());
     String mobilityAttributes = buildEitherOrRegex(this.config
@@ -102,7 +107,19 @@ public class WalletAndKeys extends Thread {
     String doorAttributes = buildEitherOrRegex(this.config
         .getOpenDoorAttributeNames());
 
+    log.debug("Items: " + itemIds);
+    log.debug("Doors: " + doorIds);
+    log.debug("Mobility: " + mobilityAttributes);
+    log.debug("Open: " + doorAttributes);
+
     HashMap<String, Boolean> itemMobility = new HashMap<String, Boolean>();
+
+    for (String item : this.config.getRequiredItems()) {
+      itemMobility.put(item, Boolean.FALSE);
+    }
+
+    this.asClient.connect(10000);
+    this.asSolver.connect(10000);
 
     while (this.keepRunning) {
       StepResponse mobilityResponse = this.asClient.getStreamRequest(itemIds,
@@ -114,43 +131,49 @@ public class WalletAndKeys extends Thread {
         while ((!mobilityResponse.isComplete() && !mobilityResponse.isError())
             && (!doorResponse.isComplete() && !doorResponse.isError())) {
           if (mobilityResponse.hasNext()) {
+            log.debug("Received a mobility update");
             WorldState updateState = mobilityResponse.next();
             Collection<String> ids = updateState.getIdentifiers();
             for (String id : ids) {
+              log.debug("Update for item {}", id);
               Collection<Attribute> attrs = updateState.getState(id);
               for (Attribute att : attrs) {
-                Boolean newVaue = (Boolean) DataConverter.decode(
+                Boolean newValue = (Boolean) DataConverter.decode(
                     att.getAttributeName(), att.getData());
-                itemMobility.put(id, newVaue);
+                log.debug("{}: mobile? {}", id, newValue);
+                itemMobility.put(id, newValue);
               } // End Attributes
             } // End Identifiers
           } // End mobility response
-          
-          if(doorResponse.hasNext()){
+
+          if (doorResponse.hasNext()) {
             LinkedList<String> missingItems = new LinkedList<String>();
             WorldState updateState = mobilityResponse.next();
             Collection<String> ids = updateState.getIdentifiers();
             for (String id : ids) {
+              log.debug("Update for door {}", id);
               Collection<Attribute> attrs = updateState.getState(id);
               for (Attribute att : attrs) {
-                // The value is actually going to be whether the door is closed or not.
+                // The value is actually going to be whether the door is closed
+                // or not.
                 Boolean closed = (Boolean) DataConverter.decode(
                     att.getAttributeName(), att.getData());
+                log.debug("{}: closed? {}", id, closed);
                 // If the door is open, check each item
-                if(!closed){
-                  for(Entry<String,Boolean> entry : itemMobility.entrySet()){
-                    if(!entry.getValue()){
+                if (!closed) {
+                  for (Entry<String, Boolean> entry : itemMobility.entrySet()) {
+                    if (!entry.getValue()) {
                       missingItems.add(entry.getKey());
                     }
                   }
                 }
               } // End Attributes
             } // End Identifiers
-            
-            if(!missingItems.isEmpty()){
+
+            if (!missingItems.isEmpty()) {
               doAlert(missingItems.toArray(new String[missingItems.size()]));
             }
-            
+
           } // End door response
         }
       } catch (Exception e) {
@@ -169,12 +192,12 @@ public class WalletAndKeys extends Thread {
   public void shutdown() {
     this.keepRunning = false;
   }
-  
-  public void doAlert(String[] forgottenItems){
-    for(String s : forgottenItems){
+
+  public void doAlert(String[] forgottenItems) {
+    for (String s : forgottenItems) {
       System.out.println("Don't forget your " + s);
     }
-    
+
     System.out.println("==========================");
   }
 

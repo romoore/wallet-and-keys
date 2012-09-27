@@ -9,4 +9,11 @@
   <doors>
     <string>my.door</string>
   </doors>
+  <mobilityAttributeNames>
+      <string>mobility</string>
+  </mobilityAttributeNames>
+  <openDoorAttributeNames>
+      <string>closed</string>
+  </openDoorAttributeNames>
+  <originName>wallet-reminder-solver</originName>
 </com.owlplatform.solver.WAKConfig>

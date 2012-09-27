@@ -58,6 +58,11 @@ public class WAKConfig {
    * Array of attribute names that are associated with doors being open or closed.
    */
   private String[] openDoorAttributeNames = new String[]{"closed"};
+  
+  /**
+   * Origin name for publishing updates to the world model.
+   */
+  private String originName = "wallet-reminder-solver";
 
   public String getWorldModelHost() {
     return worldModelHost;
@@ -113,5 +118,13 @@ public class WAKConfig {
 
   public void setOpenDoorAttributeNames(String[] openDoorAttributeNames) {
     this.openDoorAttributeNames = openDoorAttributeNames;
+  }
+
+  public String getOriginName() {
+    return originName;
+  }
+
+  public void setOriginName(String originName) {
+    this.originName = originName;
   }
 }
