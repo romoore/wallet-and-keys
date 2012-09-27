@@ -63,6 +63,11 @@ public class WAKConfig {
    * Origin name for publishing updates to the world model.
    */
   private String originName = "wallet-reminder-solver";
+  
+  /**
+   * Delay tolerance for times between mobility events.
+   */
+  private int delayToleranceSec = 5;
 
   public String getWorldModelHost() {
     return worldModelHost;
@@ -126,5 +131,13 @@ public class WAKConfig {
 
   public void setOriginName(String originName) {
     this.originName = originName;
+  }
+
+  public int getDelayToleranceSec() {
+    return delayToleranceSec;
+  }
+
+  public void setDelayToleranceSec(int delayToleranceSec) {
+    this.delayToleranceSec = delayToleranceSec;
   }
 }

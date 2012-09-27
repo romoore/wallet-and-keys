@@ -16,4 +16,5 @@
       <string>closed</string>
   </openDoorAttributeNames>
   <originName>wallet-reminder-solver</originName>
+  <delayToleranceSec>20</delayToleranceSec>
 </com.owlplatform.solver.WAKConfig>
