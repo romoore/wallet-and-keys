@@ -48,6 +48,16 @@ public class WAKConfig {
    * whenever one of the doors opens.
    */
   private String[] doors = null;
+  
+  /**
+   * Array of attribute names that are associated with item mobility.
+   */
+  private String[] mobilityAttributeNames = new String[]{"mobility"};
+  
+  /**
+   * Array of attribute names that are associated with doors being open or closed.
+   */
+  private String[] openDoorAttributeNames = new String[]{"closed"};
 
   public String getWorldModelHost() {
     return worldModelHost;

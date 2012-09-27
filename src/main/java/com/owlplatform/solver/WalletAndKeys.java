@@ -22,6 +22,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
+import com.owlplatform.worldmodel.client.ClientWorldConnection;
+import com.owlplatform.worldmodel.client.StepResponse;
+import com.owlplatform.worldmodel.solver.SolverWorldConnection;
 import com.thoughtworks.xstream.XStream;
 
 /**
@@ -50,15 +53,54 @@ public class WalletAndKeys extends Thread{
     WAKConfig conf = (WAKConfig)configReader.fromXML(new File(args[0]));
     System.out.println(configReader.toXML(conf));
    
-    new WalletAndKeys(conf);
+    final WalletAndKeys app = new WalletAndKeys(conf);
+    
+    Runtime.getRuntime().addShutdownHook(new Thread(){
+      public void run(){
+        app.shutdown();
+      }
+    });
     
   }
   
   private final WAKConfig config;
+  private boolean keepRunning = true;
+  
+  private final ClientWorldConnection asClient = new ClientWorldConnection();
+  private final SolverWorldConnection asSolver = new SolverWorldConnection();
   
   public WalletAndKeys(final WAKConfig config){
     super("Main Thread");
     this.config = config;
+    
+    this.asClient.setHost(this.config.getWorldModelHost());
+    this.asClient.setPort(this.config.getWorldModelClientPort());
+    
+    this.asSolver.setHost(this.config.getWorldModelHost());
+    this.asSolver.setPort(this.config.getWorldModelSolverPort());
+  }
+  
+  public void run(){
+    StringBuilder itemRegexBuilder = new StringBuilder("^(");
+    
+    for(int i = 0; i < this.config.getRequiredItems().length; ++i){
+      if(i > 0){
+        itemRegexBuilder.append("|");
+      }
+      itemRegexBuilder.append(this.config.getRequiredItems()[i]);
+    }
+    itemRegexBuilder.append(")$");
+    while(this.keepRunning){
+      
+      StepResponse subscription = this.asClient.getStreamRequest(itemRegexBuilder.toString(), System.currentTimeMillis(), 0, "mobility");
+    }
+    
+    this.asClient.disconnect();
+    this.asSolver.disconnect();
+  }
+  
+  public void shutdown(){
+    this.keepRunning = false;
   }
   
 }
