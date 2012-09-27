@@ -13,7 +13,7 @@
 
     <!--  Rolling file appender which breaks up the log into 10MB files  -->
 	<appender name="rollingFile" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="logs/debug.log" />
+		<param name="File" value="debug.log" />
 		<param name="MaxFileSize" value="10MB" />
 		<!-- Keep at most 100MB of logs -->
 		<param name="MaxBackupIndex" value="10" />
@@ -24,7 +24,7 @@
 	
 	<!--  Rolling file appender which breaks up the log into files by day  -->
 	<appender name="dailyRollingFile" class="org.apache.log4j.DailyRollingFileAppender">
-		<param name="File" value="logs/daily.log" />
+		<param name="File" value="daily.log" />
 		<param name="DatePattern" value="'.'yyyy-MM-dd"/>
 		<param name="Append" value="true" />
 		<param name="Threshold" value="INFO" />
@@ -36,19 +36,25 @@
 	
 	<!--  Control logging verbosity for a specific package or class -->
 	<!--  Disabled for now -->
-	<!-- 
-	<logger name="org.grailrtls.aggregator.SolverInterface">
-	  <level value="debug" />
-	  <appender-ref="console" />
+	
+	<logger name="com.owlplatform">
+	  <level value="warn" />
 	</logger>
-	 -->
+	
+	<logger name="org.apache">
+	    <level value="warn" />
+	</logger>
+	
+	<logger name="com.owlplatform.solver.WalletAndKeys">
+	    <level value="debug" />
+	</logger>
 
 	<root>
 		<priority value="debug" />
     <appender-ref ref="console" />
 		<!--
     <appender-ref ref="dailyRollingFile" />
-		<appender-ref ref="rollingFile" />
     -->
+		<appender-ref ref="rollingFile" />
 	</root>
 </log4j:configuration>
