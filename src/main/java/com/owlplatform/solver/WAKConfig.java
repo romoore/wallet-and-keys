@@ -98,4 +98,20 @@ public class WAKConfig {
   public void setDoors(String[] doors) {
     this.doors = doors;
   }
+
+  public String[] getMobilityAttributeNames() {
+    return mobilityAttributeNames;
+  }
+
+  public void setMobilityAttributeNames(String[] mobilityAttributeNames) {
+    this.mobilityAttributeNames = mobilityAttributeNames;
+  }
+
+  public String[] getOpenDoorAttributeNames() {
+    return openDoorAttributeNames;
+  }
+
+  public void setOpenDoorAttributeNames(String[] openDoorAttributeNames) {
+    this.openDoorAttributeNames = openDoorAttributeNames;
+  }
 }
