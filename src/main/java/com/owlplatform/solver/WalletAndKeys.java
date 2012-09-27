@@ -21,6 +21,7 @@ package com.owlplatform.solver;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -214,11 +215,20 @@ public class WalletAndKeys extends Thread {
   }
 
   public void doAlert(String[] forgottenItems) {
+    Attribute attr = new Attribute();
+    attr.setId(this.config.getAlertId());
+    attr.setAttributeName(this.config.getAlertAttribute());
+    attr.setCreationDate(System.currentTimeMillis());
+    StringBuilder sb = new StringBuilder();
     
     for (String s : forgottenItems) {
-      System.out.println("Don't forget your " + s);
+      sb.append("Don't forget your " + s + ".\n");
     }
-
+    try {
+      attr.setData(sb.toString().getBytes("UTF-16BE"));
+    } catch (UnsupportedEncodingException e) {
+      log.error("Couldn't encode to UTF-16.",e);
+    }
     System.out.println("==========================");
   }
 
