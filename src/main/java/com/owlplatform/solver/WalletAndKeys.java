@@ -175,7 +175,11 @@ public class WalletAndKeys extends Thread {
             }
             
           } // End door response
-          Thread.yield();
+          try {
+            Thread.sleep(50);
+          }catch(InterruptedException ie){
+            // Why me worry?
+          }
         }
       } catch (Exception e) {
         log.error("An error has occurred.", e);
