@@ -112,10 +112,10 @@ public class WalletAndKeys extends Thread {
     log.debug("Mobility: " + mobilityAttributes);
     log.debug("Open: " + doorAttributes);
 
-    HashMap<String, Boolean> itemMobility = new HashMap<String, Boolean>();
+    HashMap<String, MobilityState> itemMobility = new HashMap<String, MobilityState>();
 
     for (String item : this.config.getRequiredItems()) {
-      itemMobility.put(item, Boolean.FALSE);
+      itemMobility.put(item, new MobilityState());
     }
 
     this.asClient.connect(10000);
@@ -140,13 +140,15 @@ public class WalletAndKeys extends Thread {
               for (Attribute att : attrs) {
                 Boolean newValue = (Boolean) DataConverter.decode(
                     att.getAttributeName(), att.getData());
+                MobilityState currentState = itemMobility.get(id);
+                currentState.setMobile(newValue.booleanValue());
                 log.debug("{}: mobile? {}", id, newValue);
-                itemMobility.put(id, newValue);
               } // End Attributes
             } // End Identifiers
           } // End mobility response
 
           if (doorResponse.hasNext()) {
+            boolean atLeastOneMoving = false;
             LinkedList<String> missingItems = new LinkedList<String>();
             WorldState updateState = doorResponse.next();
             Collection<String> ids = updateState.getIdentifiers();
@@ -161,8 +163,13 @@ public class WalletAndKeys extends Thread {
                 log.debug("{}: closed? {}", id, closed);
                 // If the door is open, check each item
                 if (!closed) {
-                  for (Entry<String, Boolean> entry : itemMobility.entrySet()) {
-                    if (!entry.getValue()) {
+                  for (Entry<String, MobilityState> entry : itemMobility.entrySet()) {
+                    MobilityState state = entry.getValue();
+                    long timeSinceMobile = (System.currentTimeMillis() - state.getLastMobile())/1000;
+                   
+                    if (state.isMobile() ||  timeSinceMobile < this.config.getDelayToleranceSec()) {
+                      atLeastOneMoving = true;
+                    }else{
                       missingItems.add(entry.getKey());
                     }
                   }
@@ -170,12 +177,14 @@ public class WalletAndKeys extends Thread {
               } // End Attributes
             } // End Identifiers
 
-            if (!missingItems.isEmpty()) {
+            if (atLeastOneMoving && !missingItems.isEmpty()) {
               doAlert(missingItems.toArray(new String[missingItems.size()]));
             }
             
           } // End door response
           try {
+            // Sleep because the interfaces used are polling-based.
+            // Event-based is possible, but slightly more complex to code.
             Thread.sleep(50);
           }catch(InterruptedException ie){
             // Why me worry?
