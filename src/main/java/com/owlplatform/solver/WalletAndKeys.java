@@ -148,7 +148,7 @@ public class WalletAndKeys extends Thread {
 
           if (doorResponse.hasNext()) {
             LinkedList<String> missingItems = new LinkedList<String>();
-            WorldState updateState = mobilityResponse.next();
+            WorldState updateState = doorResponse.next();
             Collection<String> ids = updateState.getIdentifiers();
             for (String id : ids) {
               log.debug("Update for door {}", id);
@@ -173,8 +173,9 @@ public class WalletAndKeys extends Thread {
             if (!missingItems.isEmpty()) {
               doAlert(missingItems.toArray(new String[missingItems.size()]));
             }
-
+            
           } // End door response
+          Thread.yield();
         }
       } catch (Exception e) {
         log.error("An error has occurred.", e);
