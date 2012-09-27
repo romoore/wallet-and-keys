@@ -17,4 +17,6 @@
   </openDoorAttributeNames>
   <originName>wallet-reminder-solver</originName>
   <delayToleranceSec>20</delayToleranceSec>
+  <alertId>my.alerts</alertId>
+  <alertAttribute>wallet-and-keys</alertAttribute>
 </com.owlplatform.solver.WAKConfig>

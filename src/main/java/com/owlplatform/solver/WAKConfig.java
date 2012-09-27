@@ -68,6 +68,16 @@ public class WAKConfig {
    * Delay tolerance for times between mobility events.
    */
   private int delayToleranceSec = 5;
+  
+  /**
+   * The identifier for alerts.
+   */
+  private String alertId = "my.alerts";
+  
+  /**
+   * The attribute for alert updates.
+   */
+  private String alertAttribute = "don't forget";
 
   public String getWorldModelHost() {
     return worldModelHost;
@@ -139,5 +149,21 @@ public class WAKConfig {
 
   public void setDelayToleranceSec(int delayToleranceSec) {
     this.delayToleranceSec = delayToleranceSec;
+  }
+
+  public String getAlertId() {
+    return alertId;
+  }
+
+  public void setAlertId(String alertId) {
+    this.alertId = alertId;
+  }
+
+  public String getAlertAttribute() {
+    return alertAttribute;
+  }
+
+  public void setAlertAttribute(String alertAttribute) {
+    this.alertAttribute = alertAttribute;
   }
 }

@@ -34,6 +34,7 @@ import com.owlplatform.worldmodel.client.ClientWorldConnection;
 import com.owlplatform.worldmodel.client.StepResponse;
 import com.owlplatform.worldmodel.client.WorldState;
 import com.owlplatform.worldmodel.solver.SolverWorldConnection;
+import com.owlplatform.worldmodel.solver.protocol.messages.AttributeAnnounceMessage.AttributeSpecification;
 import com.owlplatform.worldmodel.types.DataConverter;
 import com.thoughtworks.xstream.XStream;
 
@@ -96,6 +97,10 @@ public class WalletAndKeys extends Thread {
     this.asSolver.setHost(this.config.getWorldModelHost());
     this.asSolver.setPort(this.config.getWorldModelSolverPort());
     this.asSolver.setOriginString(this.config.getOriginName());
+    AttributeSpecification spec = new AttributeSpecification();
+    spec.setAttributeName(this.config.getAlertAttribute());
+    spec.setIsOnDemand(false);
+    this.asSolver.addAttribute(spec);
   }
 
   public void run() {
@@ -142,6 +147,7 @@ public class WalletAndKeys extends Thread {
                     att.getAttributeName(), att.getData());
                 MobilityState currentState = itemMobility.get(id);
                 currentState.setMobile(newValue.booleanValue());
+                currentState.setLastMobile(System.currentTimeMillis());
                 log.debug("{}: mobile? {}", id, newValue);
               } // End Attributes
             } // End Identifiers
@@ -208,6 +214,7 @@ public class WalletAndKeys extends Thread {
   }
 
   public void doAlert(String[] forgottenItems) {
+    
     for (String s : forgottenItems) {
       System.out.println("Don't forget your " + s);
     }
