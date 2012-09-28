@@ -170,13 +170,16 @@ public class WalletAndKeys extends Thread {
                 log.debug("{}: closed? {}", id, closed);
                 // If the door is open, check each item
                 if (!closed) {
-                  for (Entry<String, MobilityState> entry : itemMobility.entrySet()) {
+                  for (Entry<String, MobilityState> entry : itemMobility
+                      .entrySet()) {
                     MobilityState state = entry.getValue();
-                    long timeSinceMobile = (System.currentTimeMillis() - state.getLastMobile())/1000;
-                   
-                    if (state.isMobile() ||  timeSinceMobile < this.config.getDelayToleranceSec()) {
+                    long timeSinceMobile = (System.currentTimeMillis() - state
+                        .getLastMobile()) / 1000;
+
+                    if (state.isMobile()
+                        || timeSinceMobile < this.config.getDelayToleranceSec()) {
                       atLeastOneMoving = true;
-                    }else{
+                    } else {
                       missingItems.add(entry.getKey());
                     }
                   }
@@ -187,13 +190,13 @@ public class WalletAndKeys extends Thread {
             if (atLeastOneMoving && !missingItems.isEmpty()) {
               doAlert(missingItems.toArray(new String[missingItems.size()]));
             }
-            
+
           } // End door response
           try {
             // Sleep because the interfaces used are polling-based.
             // Event-based is possible, but slightly more complex to code.
             Thread.sleep(50);
-          }catch(InterruptedException ie){
+          } catch (InterruptedException ie) {
             // Why me worry?
           }
         }
@@ -220,16 +223,17 @@ public class WalletAndKeys extends Thread {
     attr.setAttributeName(this.config.getAlertAttribute());
     attr.setCreationDate(System.currentTimeMillis());
     StringBuilder sb = new StringBuilder();
-    
+
     for (String s : forgottenItems) {
       sb.append("Don't forget your " + s + ".\n");
     }
     try {
       attr.setData(sb.toString().getBytes("UTF-16BE"));
     } catch (UnsupportedEncodingException e) {
-      log.error("Couldn't encode to UTF-16.",e);
+      log.error("Couldn't encode to UTF-16.", e);
     }
-    System.out.println("==========================");
+    log.debug("Updating {} with:\n{}", attr.getId(), sb.toString());
+    this.asSolver.updateAttribute(attr);
   }
 
   public static String buildEitherOrRegex(final String[] options) {
