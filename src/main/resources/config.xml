@@ -1,22 +1,22 @@
 <com.owlplatform.solver.WAKConfig>
-  <worldModelHost>localhost</worldModelHost>
+  <worldModelHost>raspberry</worldModelHost>
   <worldModelSolverPort>7009</worldModelSolverPort>
   <worldModelClientPort>7010</worldModelClientPort>
   <requiredItems>
-    <string>my.wallet</string>
-    <string>my.keys</string>
+    <string>maker.demo.wallet.16</string>
+    <string>maker.demo.keys.14</string>
   </requiredItems>
   <doors>
-    <string>my.door</string>
+    <string>maker.demo.door.6</string>
   </doors>
   <mobilityAttributeNames>
       <string>mobility</string>
   </mobilityAttributeNames>
   <openDoorAttributeNames>
-      <string>closed</string>
+      <string>open</string>
   </openDoorAttributeNames>
   <originName>wallet-reminder-solver</originName>
-  <delayToleranceSec>20</delayToleranceSec>
+  <delayToleranceSec>5</delayToleranceSec>
   <alertId>my.alerts</alertId>
-  <alertAttribute>wallet-and-keys</alertAttribute>
+  <alertAttribute>missing</alertAttribute>
 </com.owlplatform.solver.WAKConfig>

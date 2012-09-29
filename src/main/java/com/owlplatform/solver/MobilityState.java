@@ -24,7 +24,7 @@ package com.owlplatform.solver;
  */
 public class MobilityState {
   private boolean mobile = false;
-  private long lastMobile = Long.MIN_VALUE;
+  private long lastMobile = 0l;
   public boolean isMobile() {
     return mobile;
   }

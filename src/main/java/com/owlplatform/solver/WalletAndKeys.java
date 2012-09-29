@@ -36,6 +36,7 @@ import com.owlplatform.worldmodel.client.StepResponse;
 import com.owlplatform.worldmodel.client.WorldState;
 import com.owlplatform.worldmodel.solver.SolverWorldConnection;
 import com.owlplatform.worldmodel.solver.protocol.messages.AttributeAnnounceMessage.AttributeSpecification;
+import com.owlplatform.worldmodel.types.BooleanConverter;
 import com.owlplatform.worldmodel.types.DataConverter;
 import com.thoughtworks.xstream.XStream;
 
@@ -84,9 +85,11 @@ public class WalletAndKeys extends Thread {
 
   private final WAKConfig config;
   private boolean keepRunning = true;
+  private boolean doorOpen = false;
 
   private final ClientWorldConnection asClient = new ClientWorldConnection();
   private final SolverWorldConnection asSolver = new SolverWorldConnection();
+  private final HashMap<String, MobilityState> itemMobility = new HashMap<String, MobilityState>();
 
   public WalletAndKeys(final WAKConfig config) {
     super("Main Thread");
@@ -118,7 +121,7 @@ public class WalletAndKeys extends Thread {
     log.debug("Mobility: " + mobilityAttributes);
     log.debug("Open: " + doorAttributes);
 
-    HashMap<String, MobilityState> itemMobility = new HashMap<String, MobilityState>();
+    
 
     for (String item : this.config.getRequiredItems()) {
       itemMobility.put(item, new MobilityState());
@@ -150,13 +153,20 @@ public class WalletAndKeys extends Thread {
                 currentState.setMobile(newValue.booleanValue());
                 currentState.setLastMobile(System.currentTimeMillis());
                 log.debug("{}: mobile? {}", id, newValue);
+                // If we picked up the item while the door was open, reset the alert
+                if(this.doorOpen && currentState.isMobile()){
+                  this.resetAlert(id);
+                }
               } // End Attributes
+              
             } // End Identifiers
+            
+            
           } // End mobility response
 
           if (doorResponse.hasNext()) {
-            boolean atLeastOneMoving = false;
-            LinkedList<String> missingItems = new LinkedList<String>();
+            
+            Collection<String> missingItems = null;
             WorldState updateState = doorResponse.next();
             Collection<String> ids = updateState.getIdentifiers();
             for (String id : ids) {
@@ -165,29 +175,22 @@ public class WalletAndKeys extends Thread {
               for (Attribute att : attrs) {
                 // The value is actually going to be whether the door is closed
                 // or not.
-                Boolean closed = (Boolean) DataConverter.decode(
-                    att.getAttributeName(), att.getData());
-                log.debug("{}: closed? {}", id, closed);
+                Boolean open = BooleanConverter.get().decode(
+                   att.getData());
+                this.doorOpen = open.booleanValue();
+                log.debug("{}: open? {}", id, open);
                 // If the door is open, check each item
-                if (!closed) {
-                  for (Entry<String, MobilityState> entry : itemMobility
-                      .entrySet()) {
-                    MobilityState state = entry.getValue();
-                    long timeSinceMobile = (System.currentTimeMillis() - state
-                        .getLastMobile()) / 1000;
-
-                    if (state.isMobile()
-                        || timeSinceMobile < this.config.getDelayToleranceSec()) {
-                      atLeastOneMoving = true;
-                    } else {
-                      missingItems.add(entry.getKey());
-                    }
-                  }
+                if (open) {
+                  missingItems = checkMissing();
+                }
+                // Door is closed now
+                else {
+                  this.resetAlert();
                 }
               } // End Attributes
             } // End Identifiers
 
-            if (atLeastOneMoving && !missingItems.isEmpty()) {
+            if (missingItems != null && !missingItems.isEmpty()) {
               doAlert(missingItems.toArray(new String[missingItems.size()]));
             }
 
@@ -212,28 +215,70 @@ public class WalletAndKeys extends Thread {
     this.asClient.disconnect();
     this.asSolver.disconnect();
   }
+  
+  private Collection<String> checkMissing(){
+    log.debug("Checking for missing items.");
+    Collection<String> missingItems = new LinkedList<String>();
+    boolean atLeastOneMoving = false;
+    for (Entry<String, MobilityState> entry : itemMobility
+        .entrySet()) {
+      MobilityState state = entry.getValue();
+      long timeSinceMobile = (System.currentTimeMillis() - state
+          .getLastMobile()) / 1000;
+
+      if (state.isMobile()
+          || timeSinceMobile < this.config.getDelayToleranceSec()) {
+        log.debug(entry.getKey() + ": moving? {} last time? {}", state.isMobile(), timeSinceMobile);
+        log.debug("{} has been moving within {}s.",entry.getKey(),this.config.getDelayToleranceSec());
+        atLeastOneMoving = true;
+      } else {
+        log.debug("{} is missing.",entry.getKey());
+        missingItems.add(entry.getKey());
+      }
+    }
+    if(atLeastOneMoving){
+      return missingItems;
+    }
+    else{
+      return null;
+    }
+  }
 
   public void shutdown() {
     this.keepRunning = false;
   }
 
   public void doAlert(String[] forgottenItems) {
-    Attribute attr = new Attribute();
-    attr.setId(this.config.getAlertId());
-    attr.setAttributeName(this.config.getAlertAttribute());
-    attr.setCreationDate(System.currentTimeMillis());
-    StringBuilder sb = new StringBuilder();
 
     for (String s : forgottenItems) {
-      sb.append("Don't forget your " + s + ".\n");
+      Attribute attr = new Attribute();
+      attr.setId(s);
+      attr.setAttributeName(this.config.getAlertAttribute());
+      attr.setCreationDate(System.currentTimeMillis());
+      attr.setData(BooleanConverter.get().encode(Boolean.TRUE));
+      this.asSolver.updateAttribute(attr);
     }
-    try {
-      attr.setData(sb.toString().getBytes("UTF-16BE"));
-    } catch (UnsupportedEncodingException e) {
-      log.error("Couldn't encode to UTF-16.", e);
-    }
-    log.debug("Updating {} with:\n{}", attr.getId(), sb.toString());
+    
+  }
+  
+  public void resetAlert(String item){
+    Attribute attr = new Attribute();
+    attr.setId(item);
+    attr.setAttributeName(this.config.getAlertAttribute());
+    attr.setCreationDate(System.currentTimeMillis());
+    attr.setData(BooleanConverter.get().encode(Boolean.FALSE));
     this.asSolver.updateAttribute(attr);
+  }
+  
+  public void resetAlert(){
+    for(String s : this.config.getRequiredItems()){
+      Attribute attr = new Attribute();
+      attr.setId(s);
+      attr.setAttributeName(this.config.getAlertAttribute());
+      attr.setCreationDate(System.currentTimeMillis());
+      attr.setData(BooleanConverter.get().encode(Boolean.FALSE));
+      this.asSolver.updateAttribute(attr);
+    }
   }
 
   public static String buildEitherOrRegex(final String[] options) {
